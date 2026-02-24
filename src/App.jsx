@@ -16,7 +16,7 @@ const days = [
   {
     day: 1,
     remaining: 4,
-    media: ['citron-01.JPG', 'citron-02.MOV', 'citron-03.JPG'],
+    media: ['citron-01.JPG', 'citron-02.mp4', 'citron-03.JPG'],
     headline: '4 days to go',
     message: 'The countdown begins. We\'re already not ready for this.',
     vibe: 'Denial',
@@ -32,7 +32,7 @@ const days = [
   {
     day: 3,
     remaining: 2,
-    media: ['citron-06.MOV', 'citron-07.jpg', 'citron-08.JPG'],
+    media: ['citron-06.mp4', 'citron-07.jpg', 'citron-08.JPG'],
     headline: '2 days to go',
     message: 'Almost time. Every moment counts now.',
     vibe: 'Nostalgia',
@@ -40,7 +40,7 @@ const days = [
   {
     day: 4,
     remaining: 1,
-    media: ['citron-09.MOV', 'citron-10.JPG'],
+    media: ['citron-09.mp4', 'citron-10.JPG'],
     headline: 'Last day',
     message: 'This is it. Thank you for everything, ' + COLLEAGUE_NAME + '.',
     vibe: 'Gratitude',
