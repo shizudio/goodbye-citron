@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 // ============================================================
 // CONFIG - Change the start date to Day 1 of your countdown
@@ -10,11 +10,13 @@ const BASE = '/goodbye-citron/'
 // ============================================================
 // DATA
 // ============================================================
+const CAROUSEL_INTERVAL = 4000 // ms between auto-advance
+
 const days = [
   {
     day: 1,
     remaining: 4,
-    image: 'day1.svg',
+    media: ['day1.svg'], // add more: ['day1-a.jpg', 'day1-b.mp4', 'day1-c.jpg']
     headline: '4 days to go',
     message: 'The countdown begins. We\'re already not ready for this.',
     vibe: 'Denial',
@@ -22,7 +24,7 @@ const days = [
   {
     day: 2,
     remaining: 3,
-    image: 'day2.svg',
+    media: ['day2.svg'],
     headline: '3 days to go',
     message: 'It\'s hitting different today. Who\'s cutting onions?',
     vibe: 'Bargaining',
@@ -30,7 +32,7 @@ const days = [
   {
     day: 3,
     remaining: 2,
-    image: 'day3.svg',
+    media: ['day3.svg'],
     headline: '2 days to go',
     message: 'Almost time. Every moment counts now.',
     vibe: 'Nostalgia',
@@ -38,7 +40,7 @@ const days = [
   {
     day: 4,
     remaining: 1,
-    image: 'day4.svg',
+    media: ['day4.svg'],
     headline: 'Last day',
     message: 'This is it. Thank you for everything, ' + COLLEAGUE_NAME + '.',
     vibe: 'Gratitude',
@@ -65,6 +67,95 @@ function getDayIndex() {
 // ============================================================
 // COMPONENTS
 // ============================================================
+
+function LiveTicker() {
+  const endDate = new Date(START_DATE + 'T00:00:00')
+  endDate.setDate(endDate.getDate() + days.length) // midnight after last day
+
+  const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(endDate))
+
+  useEffect(() => {
+    const id = setInterval(() => setTimeLeft(getTimeLeft(endDate)), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  if (timeLeft.total <= 0) {
+    return (
+      <div style={{
+        fontFamily: "'Courier New', monospace",
+        fontSize: '0.8rem',
+        color: '#A49C9B',
+        letterSpacing: '0.1em',
+        marginBottom: '1.5rem',
+      }}>
+        Time's up
+      </div>
+    )
+  }
+
+  const segments = [
+    { value: timeLeft.days, label: 'd' },
+    { value: timeLeft.hours, label: 'h' },
+    { value: timeLeft.minutes, label: 'm' },
+    { value: timeLeft.seconds, label: 's' },
+  ]
+
+  return (
+    <div style={{
+      display: 'flex',
+      gap: '4px',
+      alignItems: 'baseline',
+      marginBottom: '1.5rem',
+    }}>
+      {segments.map(({ value, label }, i) => (
+        <div key={label} style={{ display: 'flex', alignItems: 'baseline' }}>
+          <span style={{
+            fontFamily: "'Courier New', monospace",
+            fontSize: 'clamp(1rem, 3.5vw, 1.4rem)',
+            fontWeight: 600,
+            color: '#7F1F12',
+            minWidth: '2ch',
+            textAlign: 'right',
+            fontVariantNumeric: 'tabular-nums',
+          }}>
+            {String(value).padStart(2, '0')}
+          </span>
+          <span style={{
+            fontFamily: "'Courier New', monospace",
+            fontSize: '0.6rem',
+            color: '#A49C9B',
+            marginRight: i < segments.length - 1 ? 6 : 0,
+          }}>
+            {label}
+          </span>
+          {i < segments.length - 1 && (
+            <span style={{
+              fontFamily: "'Courier New', monospace",
+              fontSize: 'clamp(0.8rem, 2.5vw, 1.1rem)',
+              color: '#D0C8C0',
+              marginLeft: 2,
+            }}>
+              :
+            </span>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function getTimeLeft(endDate) {
+  const now = new Date()
+  const total = endDate - now
+  if (total <= 0) return { total: 0, days: 0, hours: 0, minutes: 0, seconds: 0 }
+  return {
+    total,
+    days: Math.floor(total / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((total / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((total / (1000 * 60)) % 60),
+    seconds: Math.floor((total / 1000) % 60),
+  }
+}
 
 function ProgressTimeline({ currentDay, total }) {
   return (
@@ -118,7 +209,78 @@ function Label({ children }) {
   )
 }
 
-function PhotoCard({ imageSrc, isVisible }) {
+function isVideo(filename) {
+  return /\.(mp4|webm|mov)$/i.test(filename)
+}
+
+function MediaItem({ src }) {
+  if (isVideo(src)) {
+    return (
+      <video
+        src={src}
+        autoPlay
+        loop
+        muted
+        playsInline
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          display: 'block',
+        }}
+      />
+    )
+  }
+  return (
+    <img
+      src={src}
+      alt="Goodbye memory"
+      style={{
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        display: 'block',
+      }}
+    />
+  )
+}
+
+function MediaCarousel({ mediaFiles, isVisible }) {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [fade, setFade] = useState(true)
+  const timerRef = useRef(null)
+
+  const count = mediaFiles.length
+
+  const goTo = useCallback((idx) => {
+    setFade(false)
+    setTimeout(() => {
+      setActiveIndex(idx)
+      setFade(true)
+    }, 300)
+  }, [])
+
+  // auto-advance
+  useEffect(() => {
+    if (count <= 1) return
+    timerRef.current = setInterval(() => {
+      setFade(false)
+      setTimeout(() => {
+        setActiveIndex((prev) => (prev + 1) % count)
+        setFade(true)
+      }, 300)
+    }, CAROUSEL_INTERVAL)
+    return () => clearInterval(timerRef.current)
+  }, [count])
+
+  // reset index when day changes
+  useEffect(() => {
+    setActiveIndex(0)
+    setFade(true)
+  }, [mediaFiles])
+
+  const src = `${BASE}days/${mediaFiles[activeIndex]}`
+
   return (
     <div style={{
       width: 'min(400px, 85vw)',
@@ -130,39 +292,92 @@ function PhotoCard({ imageSrc, isVisible }) {
       opacity: isVisible ? 1 : 0,
       transform: isVisible ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.95)',
     }}>
+      {/* Media viewport */}
       <div style={{
         width: '100%',
         aspectRatio: '4 / 3',
         borderRadius: 4,
         overflow: 'hidden',
         background: '#F0E8E0',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        position: 'relative',
       }}>
-        {imageSrc ? (
-          <img
-            src={imageSrc}
-            alt="Goodbye memory"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              display: 'block',
-            }}
-          />
-        ) : (
-          <span style={{
-            fontFamily: "'Courier New', monospace",
-            fontSize: '0.8rem',
-            color: '#A49C9B',
-            textAlign: 'center',
-            padding: '1rem',
-          }}>
-            Place your photo in<br />public/days/
-          </span>
+        <div style={{
+          width: '100%',
+          height: '100%',
+          transition: 'opacity 0.3s ease',
+          opacity: fade ? 1 : 0,
+        }}>
+          <MediaItem src={src} />
+        </div>
+
+        {/* Left / Right arrows (only if multiple media) */}
+        {count > 1 && (
+          <>
+            <button
+              onClick={() => {
+                clearInterval(timerRef.current)
+                goTo((activeIndex - 1 + count) % count)
+              }}
+              style={{
+                position: 'absolute', top: '50%', left: 6,
+                transform: 'translateY(-50%)',
+                background: 'rgba(255,255,255,0.7)',
+                border: 'none', borderRadius: '50%',
+                width: 28, height: 28,
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '0.9rem', color: '#7F1F12',
+              }}
+            >{'\u2039'}</button>
+            <button
+              onClick={() => {
+                clearInterval(timerRef.current)
+                goTo((activeIndex + 1) % count)
+              }}
+              style={{
+                position: 'absolute', top: '50%', right: 6,
+                transform: 'translateY(-50%)',
+                background: 'rgba(255,255,255,0.7)',
+                border: 'none', borderRadius: '50%',
+                width: 28, height: 28,
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '0.9rem', color: '#7F1F12',
+              }}
+            >{'\u203a'}</button>
+          </>
         )}
       </div>
+
+      {/* Dot indicators */}
+      {count > 1 && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 6,
+          marginTop: 10,
+        }}>
+          {mediaFiles.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                clearInterval(timerRef.current)
+                goTo(i)
+              }}
+              style={{
+                width: i === activeIndex ? 16 : 6,
+                height: 6,
+                borderRadius: 3,
+                background: i === activeIndex ? '#7F1F12' : '#D9CFC8',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                transition: 'all 0.3s ease',
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -279,6 +494,8 @@ export default function App() {
         {COLLEAGUE_NAME}
       </h1>
 
+      <LiveTicker />
+
       {!isGone && (
         <ProgressTimeline currentDay={dayIndex} total={days.length} />
       )}
@@ -335,8 +552,8 @@ export default function App() {
           opacity: visible ? 1 : 0,
           transform: visible ? 'translateY(0)' : 'translateY(10px)',
         }}>
-          <PhotoCard
-            imageSrc={`${BASE}days/${current.image}`}
+          <MediaCarousel
+            mediaFiles={current.media}
             isVisible={visible}
           />
 
