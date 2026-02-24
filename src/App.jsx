@@ -16,7 +16,7 @@ const days = [
   {
     day: 1,
     remaining: 4,
-    media: ['day1.svg'], // add more: ['day1-a.jpg', 'day1-b.mp4', 'day1-c.jpg']
+    media: ['citron-01.JPG', 'citron-02.MOV', 'citron-03.JPG'],
     headline: '4 days to go',
     message: 'The countdown begins. We\'re already not ready for this.',
     vibe: 'Denial',
@@ -24,7 +24,7 @@ const days = [
   {
     day: 2,
     remaining: 3,
-    media: ['day2.svg'],
+    media: ['citron-04.JPG', 'citron-05.JPG'],
     headline: '3 days to go',
     message: 'It\'s hitting different today. Who\'s cutting onions?',
     vibe: 'Bargaining',
@@ -32,7 +32,7 @@ const days = [
   {
     day: 3,
     remaining: 2,
-    media: ['day3.svg'],
+    media: ['citron-06.MOV', 'citron-07.jpg', 'citron-08.JPG'],
     headline: '2 days to go',
     message: 'Almost time. Every moment counts now.',
     vibe: 'Nostalgia',
@@ -40,7 +40,7 @@ const days = [
   {
     day: 4,
     remaining: 1,
-    media: ['day4.svg'],
+    media: ['citron-09.MOV', 'citron-10.JPG'],
     headline: 'Last day',
     message: 'This is it. Thank you for everything, ' + COLLEAGUE_NAME + '.',
     vibe: 'Gratitude',
