@@ -741,7 +741,7 @@ export default function App() {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '2rem 1rem',
+      padding: '6rem 1rem 2rem',
     }}>
       <MusicToggle />
 
