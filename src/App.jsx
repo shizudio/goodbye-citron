@@ -16,7 +16,7 @@ const days = [
   {
     day: 1,
     remaining: 4,
-    media: ['citron-01.JPG', 'citron-02.mp4', 'citron-03.JPG'],
+    media: ['citron-01.JPG', 'citron-02.mp4', 'citron-03.JPG', 'IMG_6242.jpg', 'IMG_6404.jpg', 'IMG_6445.jpg'],
     headline: '4 days to go',
     message: 'The countdown begins. We\'re already not ready for this.',
     vibe: 'Denial',
@@ -24,7 +24,7 @@ const days = [
   {
     day: 2,
     remaining: 3,
-    media: ['citron-04.JPG', 'citron-05.JPG'],
+    media: ['citron-04.JPG', 'citron-05.JPG', 'IMG_6702.jpg', 'IMG_7472.jpg', 'IMG_7475.jpg', 'IMG_7840.jpg'],
     headline: '3 days to go',
     message: 'It\'s hitting different today. Who\'s cutting onions?',
     vibe: 'Bargaining',
@@ -32,7 +32,7 @@ const days = [
   {
     day: 3,
     remaining: 2,
-    media: ['citron-06.mp4', 'citron-07.jpg', 'citron-08.JPG'],
+    media: ['citron-06.mp4', 'citron-07.jpg', 'citron-08.JPG', 'IMG_8598.jpg', 'IMG_8711.jpg', 'IMG_8736.jpg', 'IMG_8738.jpg'],
     headline: '2 days to go',
     message: 'Almost time. Every moment counts now.',
     vibe: 'Nostalgia',
@@ -40,12 +40,14 @@ const days = [
   {
     day: 4,
     remaining: 1,
-    media: ['citron-09.mp4', 'citron-10.JPG'],
+    media: ['citron-09.mp4', 'citron-10.JPG', 'IMG_8790.MOV', 'IMG_8793.jpg', 'IMG_8958.jpg', 'IMG_8984.jpg', '01F46AE5-ED09-4921-B92D-51C7C1F9F841.jpg'],
     headline: 'Last day',
     message: 'This is it. Thank you for everything, ' + COLLEAGUE_NAME + '.',
     vibe: 'Gratitude',
   },
 ]
+
+const ALL_MEDIA = days.flatMap(d => d.media)
 
 const gone = {
   headline: 'Gone, but never forgotten',
@@ -284,6 +286,7 @@ function MediaCarousel({ mediaFiles, isVisible }) {
   return (
     <div style={{
       width: 'min(400px, 85vw)',
+      margin: '0 auto',
       background: '#fff',
       borderRadius: 6,
       padding: '12px 12px 16px',
@@ -415,6 +418,265 @@ function CountdownNumber({ number, label }) {
   )
 }
 
+const COVER_IMAGES = [
+  'citron-01.JPG', 'citron-03.JPG', 'citron-04.JPG', 'citron-05.JPG',
+  'citron-07.jpg', 'citron-08.JPG', 'citron-10.JPG', 'IMG_6242.jpg',
+  'IMG_6404.jpg', 'IMG_7472.jpg', 'IMG_7840.jpg', 'IMG_8598.jpg',
+  'IMG_8793.jpg', 'IMG_8958.jpg',
+]
+
+const TRACKS = [
+  { file: 'Les sardines - Patrick Sébastien.mp3', name: 'Les sardines - Patrick Sébastien' },
+  { file: 'Putain, c\'est génial _ [oXjnXtbloUs].mp3', name: 'Putain, c\'est génial' },
+  { file: 'Linkin Park - One Step Closer (Lyrics).mp3', name: 'One Step Closer - Linkin Park' },
+].map(t => ({
+  ...t,
+  cover: COVER_IMAGES[Math.floor(Math.random() * COVER_IMAGES.length)],
+}))
+
+function MusicToggle() {
+  const audioRef = useRef(null)
+  const [playing, setPlaying] = useState(false)
+  const [trackIndex, setTrackIndex] = useState(0)
+  const [expanded, setExpanded] = useState(false)
+  const autoplayedRef = useRef(false)
+
+  const track = TRACKS[trackIndex]
+
+  useEffect(() => {
+    const audio = new Audio(`${BASE}bgm/${track.file}`)
+    audio.loop = true
+    audio.volume = 0.4
+    audioRef.current = audio
+
+    audio.addEventListener('ended', () => setPlaying(false))
+
+    if (playing) audio.play()
+
+    return () => {
+      audio.pause()
+      audio.src = ''
+    }
+  }, [trackIndex])
+
+  // Autoplay on first user interaction (browsers require a gesture)
+  useEffect(() => {
+    function startMusic() {
+      if (autoplayedRef.current) return
+      autoplayedRef.current = true
+      const audio = audioRef.current
+      if (audio) {
+        audio.play().then(() => setPlaying(true)).catch(() => {})
+      }
+      document.removeEventListener('click', startMusic)
+      document.removeEventListener('touchstart', startMusic)
+    }
+    document.addEventListener('click', startMusic, { once: true })
+    document.addEventListener('touchstart', startMusic, { once: true })
+    return () => {
+      document.removeEventListener('click', startMusic)
+      document.removeEventListener('touchstart', startMusic)
+    }
+  }, [])
+
+  function toggle() {
+    const audio = audioRef.current
+    if (!audio) return
+    if (playing) {
+      audio.pause()
+    } else {
+      audio.play()
+    }
+    setPlaying(!playing)
+  }
+
+  function switchTrack(idx) {
+    if (idx === trackIndex) return
+    if (audioRef.current) audioRef.current.pause()
+    setTrackIndex(idx)
+    setPlaying(true)
+  }
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 16,
+      right: 16,
+      zIndex: 1000,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-end',
+      gap: 6,
+    }}>
+      {/* Main player bar */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 14,
+          background: 'rgba(255, 250, 244, 0.92)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid #D0C8C0',
+          borderRadius: 32,
+          padding: '8px 20px 8px 8px',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+          cursor: 'pointer',
+          transition: 'all 0.3s ease',
+        }}
+        onClick={toggle}
+      >
+        {/* Cover image */}
+        <div style={{
+          width: 60,
+          height: 60,
+          borderRadius: '50%',
+          overflow: 'hidden',
+          flexShrink: 0,
+          border: '2px solid #E0D8D0',
+          animation: playing ? 'spin 4s linear infinite' : 'none',
+        }}>
+          <img
+            src={`${BASE}days/${track.cover}`}
+            alt=""
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block',
+            }}
+          />
+        </div>
+
+        {/* Track name + play/pause */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          maxWidth: 220,
+        }}>
+          <span style={{
+            fontFamily: "'Courier New', monospace",
+            fontSize: '0.85rem',
+            color: '#7F1F12',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            letterSpacing: '0.02em',
+          }}>
+            {track.name}
+          </span>
+          <span style={{
+            fontSize: '1rem',
+            color: '#7F1F12',
+            flexShrink: 0,
+          }}>
+            {playing ? '\u275A\u275A' : '\u25B6'}
+          </span>
+        </div>
+
+        {/* Dropdown toggle chevron */}
+        {TRACKS.length > 1 && (
+          <span
+            onClick={(e) => { e.stopPropagation(); setExpanded(!expanded) }}
+            style={{
+              fontSize: '0.9rem',
+              color: '#A49C9B',
+              marginLeft: 6,
+              transition: 'transform 0.2s ease',
+              transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+              flexShrink: 0,
+            }}
+          >
+            {'\u25BC'}
+          </span>
+        )}
+      </div>
+
+      {/* Track list dropdown */}
+      {expanded && (
+        <div style={{
+          background: 'rgba(255, 250, 244, 0.95)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid #D0C8C0',
+          borderRadius: 16,
+          padding: '14px 10px 10px',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 6,
+          width: '100%',
+        }}>
+          <div style={{
+            fontFamily: "'Courier New', monospace",
+            fontSize: '0.75rem',
+            color: '#A49C9B',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            padding: '0 12px 6px',
+            borderBottom: '1px solid #E0D8D0',
+            marginBottom: 4,
+          }}>
+            songs that remind us of Citron
+          </div>
+          {TRACKS.map((t, i) => (
+            <div
+              key={i}
+              onClick={() => { switchTrack(i); setExpanded(false) }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '8px 14px 8px 10px',
+                borderRadius: 10,
+                cursor: 'pointer',
+                background: i === trackIndex ? 'rgba(127, 31, 18, 0.08)' : 'transparent',
+                transition: 'background 0.2s ease',
+              }}
+            >
+              <div style={{
+                width: 44,
+                height: 44,
+                borderRadius: '50%',
+                overflow: 'hidden',
+                flexShrink: 0,
+                border: i === trackIndex ? '2px solid #7F1F12' : '2px solid #E0D8D0',
+              }}>
+                <img
+                  src={`${BASE}days/${t.cover}`}
+                  alt=""
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    display: 'block',
+                  }}
+                />
+              </div>
+              <span style={{
+                fontFamily: "'Courier New', monospace",
+                fontSize: '0.85rem',
+                color: i === trackIndex ? '#7F1F12' : '#A49C9B',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}>
+                {t.name}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Spin animation for cover art */}
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  )
+}
+
 function DayNavButton({ label, onClick, disabled }) {
   return (
     <button
@@ -481,6 +743,8 @@ export default function App() {
       justifyContent: 'center',
       padding: '2rem 1rem',
     }}>
+      <MusicToggle />
+
       <Label>A farewell for</Label>
 
       <h1 style={{
@@ -507,12 +771,8 @@ export default function App() {
           opacity: visible ? 1 : 0,
           transform: visible ? 'translateY(0)' : 'translateY(10px)',
         }}>
-          <div style={{
-            fontSize: 'clamp(3rem, 12vw, 6rem)',
-            lineHeight: 1,
-            marginBottom: '1rem',
-          }}>
-            &#128075;
+          <div style={{ marginBottom: '1rem' }}>
+            <MediaCarousel mediaFiles={ALL_MEDIA} isVisible={visible} />
           </div>
           <h2 style={{
             fontSize: 'clamp(1.5rem, 5vw, 2.5rem)',
@@ -605,7 +865,7 @@ export default function App() {
         marginTop: '2rem',
       }}>
         <DayNavButton
-          label="\u2190 Prev"
+          label="Prev"
           onClick={() => navigate(dayIndex - 1)}
           disabled={dayIndex <= 0}
         />
@@ -615,7 +875,7 @@ export default function App() {
           disabled={dayIndex === Math.max(0, Math.min(realDayIndex, days.length))}
         />
         <DayNavButton
-          label="Next \u2192"
+          label="Next"
           onClick={() => navigate(dayIndex + 1)}
           disabled={dayIndex >= days.length}
         />
